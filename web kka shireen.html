@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi PresenLink Tasker - Login System</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. SETTING WARNA (PINK & HIJAU PASTEL) --- */
+        :root {
+            /* Light Mode */
+            --bg-body: #fff0f5;         
+            --bg-card: #ffffff;
+            --text-main: #4a4a4a;
+            --text-light: #777;
+            
+            --pink-soft: #ffc2cd;
+            --pink-strong: #ff8fa9;     
+            
+            --green-soft: #d3f9d8;      
+            --green-btn: #80ed99;       
+            --green-strong: #cf0072;    
+            
+            --shadow: 0 10px 25px rgba(0, 184, 148, 0.15); 
+            --border: #ffdfe5;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-body: #2d3436;
+            --bg-card: #353b48;
+            --text-main: #dfe6e9;
+            --text-light: #b2bec3;
+            
+            --pink-soft: #e84393;
+            --pink-strong: #fd79a8;
+            
+            --green-soft: #00cec9;
+            --green-btn: #00b894;
+            --green-strong: #55efc4;
+            
+            --shadow: 0 10px 25px rgba(0,0,0,0.3);
+            --border: #636e72;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; transition: all 0.3s ease; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- 2. LOGIN PAGE (NEW!) --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #fff0f5 0%, #c7f9cc 100%);
+            z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            padding: 40px; border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 800px; width: 90%;
+            border: 4px solid white;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .role-card {
+            background: var(--bg-body);
+            padding: 20px; border-radius: 20px;
+            cursor: pointer; border: 2px solid transparent;
+        }
+        .role-card:hover { border-color: var(--green-btn); transform: translateY(-5px); background: white; }
+        
+        .role-icon { font-size: 3rem; margin-bottom: 10px; color: var(--pink-strong); }
+        .role-title { font-weight: bold; color: var(--text-main); }
+
+        /* --- 3. HEADER --- */
+        header {
+            background: var(--bg-card);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky; top: 0; z-index: 100;
+            border-bottom: 3px solid var(--green-btn);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--pink-strong);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand span { color: var(--green-strong); }
+
+        .controls { display: flex; gap: 15px; align-items: center; }
+
+        .btn-toggle {
+            background: var(--bg-body); border: 1px solid var(--border);
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-main);
+        }
+        .profile-pill {
+            background: var(--green-soft);
+            color: #2d3436;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid var(--green-btn);
+        }
+
+        /* --- 4. LAYOUT UTAMA --- */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            width: 100%;
+            flex: 1;
+            /* Hide container initially until login */
+            display: none; 
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+
+        /* Hero / Info */
+        .hero-box {
+            background: linear-gradient(135deg, #fff0f5 0%, #c7f9cc 100%);
+            border-radius: 20px; padding: 30px; text-align: center;
+            margin-bottom: 30px; border: 2px solid white; box-shadow: var(--shadow);
+        }
+        .btn-hero {
+            background: var(--green-btn); color: #fff; padding: 10px 25px; 
+            border-radius: 25px; border: none; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-hero:hover { transform: scale(1.05); background: var(--green-strong); }
+
+        /* Laporan Dropdown */
+        details.project-info {
+            background: var(--bg-card); border-radius: 15px; margin-bottom: 30px;
+            box-shadow: var(--shadow); border-left: 5px solid var(--pink-strong);
+        }
+        details.project-info summary {
+            padding: 15px 20px; font-weight: bold; cursor: pointer; list-style: none;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .report-content { padding: 20px; border-top: 1px solid var(--border); line-height: 1.6; }
+
+        /* Grid Fitur */
+        .grid-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; }
+
+        .card {
+            background: var(--bg-card); border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: var(--shadow); border: 2px solid transparent; cursor: pointer; position: relative;
+        }
+        .card:hover { border-color: var(--green-btn); transform: translateY(-5px); }
+
+        .icon-box {
+            width: 70px; height: 70px; background: var(--bg-body); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;
+            font-size: 1.8rem; color: var(--pink-strong);
+        }
+
+        .status-badge {
+            display: inline-block; padding: 5px 12px; border-radius: 15px; font-size: 0.75rem;
+            background: #eee; color: #999; margin-top: 10px;
+        }
+        
+        /* Unlocked State */
+        .card.unlocked { background: #f0fff4; border: 2px solid var(--green-btn); }
+        .card.unlocked .icon-box { background: white; color: var(--green-strong); }
+        .card.unlocked .status-badge { background: var(--green-strong); color: white; }
+
+        /* --- 5. HALAMAN ISI FITUR --- */
+        .feature-view {
+            display: none; background: var(--bg-card); border-radius: 20px; padding: 40px;
+            box-shadow: var(--shadow); animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+        .view-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--green-soft); padding-bottom: 15px; }
+        .btn-back { background: var(--pink-soft); color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        
+        .sim-box { background: var(--bg-body); padding: 30px; border-radius: 15px; text-align: center; border: 2px dashed var(--green-btn); margin-bottom: 20px; }
+        .btn-action { width: 100%; padding: 12px; background: var(--green-strong); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
+        /* --- 6. AI & MODALS --- */
+        .ai-wrapper { position: fixed; bottom: 30px; left: 30px; z-index: 999; display: flex; flex-direction: column-reverse; align-items: flex-start; }
+        .ai-btn {
+            width: 65px; height: 65px; background: var(--pink-strong); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 111, 145, 0.4); animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(255, 111, 145, 0.4);} 70% {box-shadow: 0 0 0 15px rgba(255, 111, 145, 0);} 100% {box-shadow: 0 0 0 0 rgba(255, 111, 145, 0);} }
+        .ai-chat { display: none; width: 300px; height: 400px; background: var(--bg-card); border-radius: 20px; margin-bottom: 15px; box-shadow: var(--shadow); border: 2px solid var(--green-btn); flex-direction: column; }
+        .ai-body { flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-body); }
+        .msg { padding: 8px 12px; margin-bottom: 8px; border-radius: 10px; font-size: 0.9rem; max-width: 85%; }
+        .msg-bot { background: white; color: #333; align-self: flex-start; }
+        .msg-user { background: var(--green-strong); color: white; margin-left: auto; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
+        textarea { width: 100%; padding: 10px; margin: 15px 0; border-radius: 10px; border: 1px solid #ccc; height: 80px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1 style="color: var(--green-strong); font-family: 'Fredoka', sans-serif; margin-bottom: 10px;">
+                Hi PresenLink Tasker
+            </h1>
+            <p style="color: var(--text-light); margin-bottom: 30px;">Silakan pilih akun Anda untuk masuk</p>
+            
+            <div class="role-grid">
+                <div class="role-card" onclick="loginSystem('guru')">
+                    <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div class="role-title">Guru</div>
+                    <p style="font-size: 0.8rem; color: #aaa;">Kelola Kelas & Tugas</p>
+                </div>
+
+                <div class="role-card" onclick="loginSystem('siswa')">
+                    <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
+                    <div class="role-title">Siswa</div>
+                    <p style="font-size: 0.8rem; color: #aaa;">Absen & Kumpul Tugas</p>
+                </div>
+
+                <div class="role-card" onclick="loginSystem('ortu')">
+                    <div class="role-icon"><i class="fas fa-user-friends"></i></div>
+                    <div class="role-title">Orang Tua</div>
+                    <p style="font-size: 0.8rem; color: #aaa;">Monitoring Anak</p>
+                </div>
+            </div>
+        </div>
+        <p style="margin-top: 20px; font-size: 0.9rem; color: #555;">© Khuld Shireen Wibowo - XI TKJ 1</p>
+    </div>
+
+    <header id="main-header" style="display: none;">
+        <div class="brand">
+            <i class="fas fa-leaf" style="color: var(--green-strong);"></i>
+            Hi <span>PresenLink</span>
+        </div>
+        <div class="controls">
+            <button class="btn-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
+            <div class="profile-pill" id="user-profile">
+                </div>
+            <button onclick="logout()" style="background: var(--pink-strong); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; margin-left: 10px;">Keluar</button>
+        </div>
+    </header>
+
+    <div class="container" id="main-container">
+        
+        <div id="home-view">
+            <div class="hero-box">
+                <h1 id="welcome-msg">Selamat Datang</h1>
+                <p>Sistem terintegrasi untuk Sekolah Menengah Kejuruan.</p>
+                <button class="btn-hero" onclick="showGuide()"><i class="fas fa-info-circle"></i> Cara Pakai</button>
+            </div>
+
+            <details class="project-info">
+                <summary>📄 Tentang Laporan Inovasi Teknologi</summary>
+                <div class="report-content">
+                    <h3>Hi PresenLink Tasker</h3>
+                    <p>Oleh: Khuld Shireen Wibowo / XI TKJ 1</p>
+                    <p>Aplikasi ini memudahkan Guru, Siswa, dan Orang Tua untuk terhubung dalam satu ekosistem pendidikan digital.</p>
+                    <a href="#" style="color: var(--green-strong);" onclick="alert('Mengunduh Laporan Lengkap...')">Download PDF Lengkap</a>
+                </div>
+            </details>
+
+            <div class="grid-features">
+                <div class="card" id="card-absensi" onclick="checkFeature('absensi', 'Absensi')">
+                    <div class="icon-box"><i class="fas fa-qrcode"></i></div>
+                    <h3 id="label-absensi">Absensi</h3>
+                    <p id="desc-absensi">Deskripsi fitur.</p>
+                    <span class="status-badge" id="badge-absensi"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+
+                <div class="card" id="card-tugas" onclick="checkFeature('tugas', 'Tugas')">
+                    <div class="icon-box"><i class="fas fa-laptop-code"></i></div>
+                    <h3 id="label-tugas">Tugas</h3>
+                    <p id="desc-tugas">Deskripsi fitur.</p>
+                    <span class="status-badge" id="badge-tugas"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+
+                <div class="card" id="card-dashboard" onclick="checkFeature('dashboard', 'Dashboard')">
+                    <div class="icon-box"><i class="fas fa-chart-pie"></i></div>
+                    <h3 id="label-dashboard">Dashboard</h3>
+                    <p>Statistik & Data.</p>
+                    <span class="status-badge" id="badge-dashboard"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+
+                <div class="card" id="card-laporan" onclick="checkFeature('laporan', 'Laporan')">
+                    <div class="icon-box"><i class="fas fa-file-alt"></i></div>
+                    <h3>Laporan Inovasi</h3>
+                    <p>Dokumen Proyek.</p>
+                    <span class="status-badge" id="badge-laporan"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-absensi" class="feature-view">
+            <div class="view-head">
+                <h2 id="view-title-absensi">Absensi</h2>
+                <button class="btn-back" onclick="closeFeature()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+            <div class="sim-box" id="content-absensi">
+                </div>
+            <button class="btn-action" onclick="runSimulation('absensi')">Jalankan</button>
+        </div>
+
+        <div id="view-tugas" class="feature-view">
+            <div class="view-head">
+                <h2 id="view-title-tugas">Tugas</h2>
+                <button class="btn-back" onclick="closeFeature()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+            <div class="sim-box" id="content-tugas">
+                </div>
+            <button class="btn-action" onclick="runSimulation('tugas')">Proses Tugas</button>
+        </div>
+
+        <div id="view-dashboard" class="feature-view">
+            <div class="view-head">
+                <h2>Dashboard Data</h2>
+                <button class="btn-back" onclick="closeFeature()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex:1; background:var(--green-soft); padding:20px; border-radius:15px; text-align:center;">
+                    <h1>95%</h1> <p>Kehadiran</p>
+                </div>
+                <div style="flex:1; background:var(--pink-soft); padding:20px; border-radius:15px; text-align:center;">
+                    <h1>A</h1> <p>Rata-rata Nilai</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-laporan" class="feature-view">
+            <div class="view-head">
+                <h2>Laporan Inovasi</h2>
+                <button class="btn-back" onclick="closeFeature()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+            <div style="text-align: center;">
+                <i class="fas fa-file-pdf" style="font-size: 4rem; color: var(--pink-strong);"></i>
+                <h3 style="margin-top: 10px;">Laporan_Lengkap_Khuld.pdf</h3>
+                <button class="btn-action" style="margin-top: 20px; width: auto; padding: 10px 40px;" onclick="alert('File berhasil diunduh!')">Unduh Sekarang</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="ai-wrapper">
+        <div class="ai-chat" id="aiWindow">
+            <div style="background:var(--green-btn); padding:15px; color:white; display:flex; justify-content:space-between;">
+                <span>🤖 PresenLink AI</span> <i class="fas fa-times" onclick="toggleAI()" style="cursor:pointer;"></i>
+            </div>
+            <div class="ai-body" id="chatList"><div class="msg msg-bot">Halo! Saya siap membantu.</div></div>
+            <div style="padding:10px; display:flex;">
+                <input type="text" id="chatInput" placeholder="Ketik pesan..." style="flex:1; padding:5px;" onkeypress="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()" style="margin-left:5px;">➤</button>
+            </div>
+        </div>
+        <div class="ai-btn" onclick="toggleAI()">🍓</div>
+    </div>
+
+    <div class="modal-overlay" id="unlockModal">
+        <div class="modal-content">
+            <i class="fas fa-lock" style="font-size: 3rem; color: var(--pink-strong);"></i>
+            <h3>Fitur Terkunci</h3>
+            <p>Masukkan kode/feedback untuk membuka fitur ini.</p>
+            <form onsubmit="unlockProcess(event)">
+                <textarea id="feedbackText" placeholder="Ketik 'Buka'..." required></textarea>
+                <button type="submit" class="btn-action">Buka Fitur</button>
+                <button type="button" onclick="closeModal()" style="background:none; border:none; color:#888; margin-top:10px;">Batal</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA PERAN (ROLE DATA) ---
+        const roles = {
+            'guru': {
+                name: 'Bpk. Guru', icon: '<i class="fas fa-chalkboard-teacher"></i>',
+                msg: 'Selamat Datang, Bapak Guru. Kelola kelas Anda hari ini.',
+                absensi: { title: 'Buat QR Code', desc: 'Generate QR untuk siswa.', content: '<i class="fas fa-qrcode" style="font-size:4rem;"></i><p>QR Code sedang dibuat...</p>' },
+                tugas: { title: 'Buat Tugas Baru', desc: 'Upload materi & deadline.', content: '<p>Judul Tugas:</p><input type="text" style="width:100%; padding:5px;"><p>Deadline:</p><input type="date">' }
+            },
+            'siswa': {
+                name: 'Khuld Shireen', icon: '<i class="fas fa-user-graduate"></i>',
+                msg: 'Halo Khuld! Siap belajar hari ini?',
+                absensi: { title: 'Scan Kehadiran', desc: 'Scan QR dari Guru.', content: '<i class="fas fa-camera" style="font-size:4rem;"></i><p>Kamera aktif...</p>' },
+                tugas: { title: 'Upload Tugas', desc: 'Kirim tugas PDF/Doc.', content: '<p>Pilih File:</p><input type="file">' }
+            },
+            'ortu': {
+                name: 'Wali Murid', icon: '<i class="fas fa-user-friends"></i>',
+                msg: 'Pantau perkembangan anak Anda disini.',
+                absensi: { title: 'Cek Kehadiran', desc: 'Lihat riwayat absen anak.', content: '<p>Hari ini: <b>Hadir</b> (07:00 WIB)</p><p>Kemarin: <b>Hadir</b></p>' },
+                tugas: { title: 'Monitoring Tugas', desc: 'Cek nilai & status tugas.', content: '<p>Matematika: <b>Selesai (90)</b></p><p>Biologi: <b>Belum</b></p>' }
+            }
+        };
+
+        let currentRole = '';
+        const appState = { absensi: false, tugas: false, dashboard: false, laporan: false };
+        let targetId = '';
+
+        // --- 1. LOGIN SYSTEM ---
+        function loginSystem(role) {
+            currentRole = role;
+            const data = roles[role];
+
+            // Update UI
+            document.getElementById('user-profile').innerHTML = `${data.icon} ${data.name}`;
+            document.getElementById('welcome-msg').innerText = data.msg;
+
+            // Update Card Labels
+            document.getElementById('label-absensi').innerText = data.absensi.title;
+            document.getElementById('desc-absensi').innerText = data.absensi.desc;
+            document.getElementById('label-tugas').innerText = data.tugas.title;
+            document.getElementById('desc-tugas').innerText = data.tugas.desc;
+
+            // Update Feature Content
+            document.getElementById('view-title-absensi').innerText = data.absensi.title;
+            document.getElementById('content-absensi').innerHTML = data.absensi.content;
+            document.getElementById('view-title-tugas').innerText = data.tugas.title;
+            document.getElementById('content-tugas').innerHTML = data.tugas.content;
+
+            // Hide Login, Show Main
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('main-container').style.display = 'block';
+        }
+
+        function logout() {
+            location.reload(); // Reload page to logout
+        }
+
+        // --- 2. FITUR LOGIC ---
+        function checkFeature(id) {
+            targetId = id;
+            if (appState[id]) openView(id);
+            else document.getElementById('unlockModal').style.display = 'flex';
+        }
+
+        function unlockProcess(e) {
+            e.preventDefault();
+            if(document.getElementById('feedbackText').value) {
+                appState[targetId] = true;
+                document.getElementById('card-'+targetId).classList.add('unlocked');
+                document.getElementById('badge-'+targetId).innerText = 'Terbuka';
+                document.getElementById('badge-'+targetId).style.background = 'var(--green-strong)';
+                document.getElementById('badge-'+targetId).style.color = 'white';
+                document.getElementById('unlockModal').style.display = 'none';
+                openView(targetId);
+            }
+        }
+
+        function closeModal() { document.getElementById('unlockModal').style.display = 'none'; }
+        
+        function openView(id) {
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('view-'+id).style.display = 'block';
+        }
+
+        function closeFeature() {
+            document.querySelectorAll('.feature-view').forEach(e => e.style.display = 'none');
+            document.getElementById('home-view').style.display = 'block';
+        }
+
+        // --- 3. SIMULATION RUNNER ---
+        function runSimulation(type) {
+            alert('Memproses permintaan sebagai ' + roles[currentRole].name + '...');
+            setTimeout(() => {
+                alert('Berhasil! Data telah disimpan.');
+                closeFeature();
+            }, 1000);
+        }
+
+        // --- 4. EXTRAS ---
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const ico = document.getElementById('themeIcon');
+            ico.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function toggleAI() {
+            const el = document.getElementById('aiWindow');
+            el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const list = document.getElementById('chatList');
+            if(!input.value) return;
+            
+            list.innerHTML += `<div class="msg msg-user">${input.value}</div>`;
+            const userMsg = input.value.toLowerCase();
+            input.value = '';
+
+            setTimeout(() => {
+                let reply = "Saya bisa bantu jelaskan cara login atau fitur.";
+                if(userMsg.includes('guru')) reply = "Akun Guru bisa membuat QR Code absen dan memberi tugas.";
+                if(userMsg.includes('siswa')) reply = "Akun Siswa bisa scan QR dan upload tugas.";
+                if(userMsg.includes('ortu')) reply = "Orang tua bisa memantau kehadiran anak.";
+                list.innerHTML += `<div class="msg msg-bot">${reply}</div>`;
+                list.scrollTop = list.scrollHeight;
+            }, 800);
+        }
+    </script>
+</body>
+</html>
