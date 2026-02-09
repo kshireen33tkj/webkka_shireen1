@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi PresenLink Tasker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h1 style="color: var(--pink-strong); margin-bottom: 10px;">Hi PresenLink Tasker</h1>
+            <p style="color: #777; margin-bottom: 30px;">Pilih peran Anda untuk masuk:</p>
+            
+            <div class="role-grid">
+                <div class="role-card" onclick="loginSystem('guru')">
+                    <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <h3>Guru</h3>
+                </div>
+                <div class="role-card" onclick="loginSystem('siswa')">
+                    <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
+                    <h3>Siswa</h3>
+                </div>
+                <div class="role-card" onclick="loginSystem('ortu')">
+                    <div class="role-icon"><i class="fas fa-user-friends"></i></div>
+                    <h3>Orang Tua</h3>
+                </div>
+            </div>
+            <p style="margin-top:20px; font-size:0.8rem; color:#aaa;">Prototype by Khuld Shireen XI TKJ 1</p>
+        </div>
+    </div>
+
+    <header id="main-header" style="display: none;">
+        <div class="brand"><i class="fas fa-leaf"></i> Hi <span>PresenLink</span></div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div id="user-info" style="font-weight: bold; color: var(--text-main);">User</div>
+            <button onclick="logout()" style="background: #ff6f91; color: white; border: none; padding: 5px 15px; border-radius: 15px; cursor: pointer;">Log Out</button>
+        </div>
+    </header>
+
+    <div class="container" id="main-container" style="display: none;">
+        
+        <div id="home-view">
+            <div class="hero-box">
+                <h1 id="welcome-msg">Selamat Datang</h1>
+                <p>Sistem manajemen pembelajaran digital SMK.</p>
+            </div>
+
+            <div class="grid-features">
+                <div class="card" id="card-absensi" onclick="checkFeature('absensi')">
+                    <div class="icon-box"><i class="fas fa-qrcode"></i></div>
+                    <h3>Absensi QR</h3>
+                    <span class="status-badge" id="badge-absensi"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+                <div class="card" id="card-tugas" onclick="checkFeature('tugas')">
+                    <div class="icon-box"><i class="fas fa-laptop-code"></i></div>
+                    <h3>Tugas & Materi</h3>
+                    <span class="status-badge" id="badge-tugas"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+                <div class="card" id="card-laporan" onclick="checkFeature('laporan')">
+                    <div class="icon-box"><i class="fas fa-file-alt"></i></div>
+                    <h3>Laporan PDF</h3>
+                    <span class="status-badge" id="badge-laporan"><i class="fas fa-lock"></i> Terkunci</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-generic" class="feature-view">
+            <div class="view-head">
+                <h2 id="feature-title">Judul Fitur</h2>
+                <button class="btn-back" onclick="closeFeature()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+            <div style="text-align: center; padding: 40px; border: 2px dashed #ddd; border-radius: 10px;">
+                <i id="feature-icon" class="fas fa-cogs" style="font-size: 4rem; color: var(--green-btn); margin-bottom: 20px;"></i>
+                <p id="feature-desc">Konten simulasi akan muncul di sini.</p>
+                <button onclick="alert('Simulasi Berhasil!')" style="margin-top: 20px; padding: 10px 30px; background: var(--green-text); color: white; border: none; border-radius: 10px; cursor: pointer;">Jalankan Proses</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="unlockModal">
+        <div class="modal-content">
+            <i class="fas fa-lock" style="font-size: 3rem; color: var(--pink-strong);"></i>
+            <h3>Fitur Terkunci</h3>
+            <p>Simulasi: Masukkan kode atau ketik 'buka' untuk akses.</p>
+            <form onsubmit="unlockProcess(event)">
+                <textarea id="feedbackText" placeholder="Ketik 'buka'..." required></textarea>
+                <button type="submit" style="padding:10px 20px; background:var(--green-btn); border:none; border-radius:10px; cursor:pointer;">Buka Fitur</button>
+                <button type="button" onclick="document.getElementById('unlockModal').style.display='none'" style="background:none; border:none; color:#888; margin-left:10px; cursor:pointer;">Batal</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data Peran
+        const roles = {
+            'guru': { name: 'Bpk. Guru', msg: 'Selamat Datang Bapak Guru. Kelola kelas Anda.' },
+            'siswa': { name: 'Siswa TKJ', msg: 'Halo Siswa! Siap belajar hari ini?' },
+            'ortu': { name: 'Wali Murid', msg: 'Pantau perkembangan anak Anda.' }
+        };
+
+        let currentRole = '';
+        let targetId = '';
+        
+        // 1. Fungsi Login
+        function loginSystem(role) {
+            currentRole = role;
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('main-container').style.display = 'block';
+            
+            // Set Text
+            document.getElementById('user-info').innerText = roles[role].name;
+            document.getElementById('welcome-msg').innerText = roles[role].msg;
+        }
+
+        // 2. Fungsi Log Out
+        function logout() {
+            location.reload();
+        }
+
+        // 3. Cek & Buka Fitur
+        function checkFeature(id) {
+            targetId = id;
+            const card = document.getElementById('card-' + id);
+            
+            if (card.classList.contains('unlocked')) {
+                openView(id);
+            } else {
+                document.getElementById('unlockModal').style.display = 'flex';
+            }
+        }
+
+        function unlockProcess(e) {
+            e.preventDefault();
+            // Unlock fitur
+            document.getElementById('card-' + targetId).classList.add('unlocked');
+            document.getElementById('badge-' + targetId).innerHTML = '<i class="fas fa-check"></i> Terbuka';
+            
+            document.getElementById('unlockModal').style.display = 'none';
+            document.getElementById('feedbackText').value = '';
+            openView(targetId);
+        }
+
+        // 4. Navigasi Halaman
+        function openView(id) {
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('view-generic').style.display = 'block';
+            
+            // Ganti Judul & Ikon sesuai fitur
+            let title = "Fitur", desc = "Deskripsi", icon = "fa-cogs";
+            if(id === 'absensi') { title = "Absensi QR"; desc = "Scan QR Code untuk presensi."; icon = "fa-qrcode"; }
+            if(id === 'tugas') { title = "Tugas Sekolah"; desc = "Upload tugas atau materi pelajaran."; icon = "fa-upload"; }
+            if(id === 'laporan') { title = "Laporan Inovasi"; desc = "Preview dokumen PDF laporan."; icon = "fa-file-pdf"; }
+
+            document.getElementById('feature-title').innerText = title;
+            document.getElementById('feature-desc').innerText = desc;
+            document.getElementById('feature-icon').className = "fas " + icon;
+        }
+
+        function closeFeature() {
+            document.getElementById('view-generic').style.display = 'none';
+            document.getElementById('home-view').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
